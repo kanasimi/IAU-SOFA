@@ -1,4 +1,4 @@
-sofa_lib.lis                                            2013 November 19
+sofa_lib.lis                                             2015 January 30
 
                      ----------------------
                      SOFA Astronomy Library
@@ -111,8 +111,12 @@ ROUTINES
      LDN       light deflection by multiple solar-system bodies
      LDSUN     light deflection by the Sun
      PMPX      apply proper motion and parallax
+     PMSAFE    apply proper motion, with zero-parallax precautions
      PVTOB     observatory position and velocity
+     PVSTAR    space motion pv-vector to star catalog data
      REFCO     refraction constants
+     STARPM    apply proper motion
+     STARPV    star catalog data to space motion pv-vector
 
   Time scales
 
@@ -240,11 +244,6 @@ ROUTINES
      FAUR03    mean longitude of Uranus
      FAVE03    mean longitude of Venus
 
-  Star space motion
-
-     PVSTAR    space motion pv-vector to star catalog data
-     STARPV    star catalog data to space motion pv-vector
-
   Star catalog conversions
 
      FK52H     transform FK5 star data into the Hipparcos system
@@ -252,8 +251,11 @@ ROUTINES
      FK5HZ     FK5 to Hipparcos assuming zero Hipparcos proper motion
      H2FK5     transform Hipparcos star data into the FK5 system
      HFK5Z     Hipparcos to FK5 assuming zero Hipparcos proper motion
-     PMSAFE    apply proper motion, with zero-parallax precautions
-     STARPM    apply proper motion
+
+  Galactic coordinates
+
+     G2ICRS    transform IAU 1958 galactic coordinates to ICRS
+     ICRS2G    transform ICRS coordinates to IAU 1958 Galactic
 
   Geodetic/geocentric
 
@@ -262,7 +264,6 @@ ROUTINES
      GC2GDE    geocentric to geodetic given ellipsoid a,f
      GD2GC     geodetic to geocentric for a nominated ellipsoid
      GD2GCE    geodetic to geocentric given ellipsoid a,f
-
 
   Obsolete
 
@@ -367,6 +368,7 @@ CALLS: FORTRAN VERSION
    CALL iau_FK5HZ  ( R5, D5, DATE1, DATE2, RH, DH )
    CALL iau_FW2M   ( GAMB, PHIB, PSI, EPS, R )
    CALL iau_FW2XY  ( GAMB, PHIB, PSI, EPS, X, Y )
+   CALL iau_G2ICRS ( DL, DB, DR, DD )
    CALL iau_GC2GD  ( N, XYZ, ELONG, PHI, HEIGHT, J )
    CALL iau_GC2GDE ( A, F, XYZ, ELONG, PHI, HEIGHT, J )
    CALL iau_GD2GC  ( N, ELONG, PHI, HEIGHT, XYZ, J )
@@ -382,6 +384,7 @@ CALLS: FORTRAN VERSION
    CALL iau_H2FK5  ( RH, DH, DRH, DDH, PXH, RVH,
   :                  R5, D5, DR5, DD5, PX5, RV5 )
    CALL iau_HFK5Z  ( RH, DH, DATE1, DATE2, R5, D5, DR5, DD5 )
+   CALL iau_ICRS2G ( DR, DD, DL, DB  )
    CALL iau_JD2CAL ( DJ1, DJ2, IY, IM, ID, FD, J )
    CALL iau_JDCALF ( NDP, DJ1, DJ2, IYMDF, J )
    CALL iau_LD     ( BM, P, Q, E, EM, DLIM, P1 )
@@ -560,6 +563,7 @@ CALLS: C VERSION
        iauFk5hz  ( r5, d5, date1, date2, &rh, &dh );
        iauFw2m   ( gamb, phib, psi, eps, r );
        iauFw2xy  ( gamb, phib, psi, eps, &x, &y );
+       iauG2icrs ( dl, db, &dr, &dd );
    i = iauGc2gd  ( n, xyz, &elong, &phi, &height );
    i = iauGc2gde ( a, f, xyz, &elong, &phi, &height );
    i = iauGd2gc  ( n, elong, phi, height, xyz );
@@ -576,6 +580,7 @@ CALLS: C VERSION
                    &r5, &d5, &dr5, &dd5, &px5, &rv5 );
        iauHfk5z  ( rh, dh, date1, date2,
                    &r5, &d5, &dr5, &dd5 );
+       iauIcrs2g ( dr, dd, &dl, &db );
    i = iauJd2cal ( dj1, dj2, &iy, &im, &id, &fd );
    i = iauJdcalf ( ndp, dj1, dj2, iymdf );
        iauLd     ( bm, p, q, e, em, dlim, p1 );

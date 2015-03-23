@@ -1,4 +1,4 @@
-intro.lis                                                 2010 October 8
+intro.lis                                                2015 January 29
 
 
                   -------------------------------
@@ -9,7 +9,7 @@ intro.lis                                                 2010 October 8
   SOFA stands for "Standards Of Fundamental Astronomy".  The SOFA
   software libraries are a collection of subprograms, in source-
   code form, which implement official IAU algorithms for fundamental-
-  astronomy computations.   The subprograms at present comprise 164
+  astronomy computations.   The subprograms at present comprise 166
   "astronomy" routines supported by 55 "vector/matrix" routines,
   available in both Fortran77 and C implementations.
 
@@ -76,9 +76,9 @@ this document.
 
 The "astronomy" library comprises 164 routines (plus one obsolete
 Fortran routine that now appears under a revised name).  The areas
-addressed include calendars, time scales, ephemerides, precession-
-nutation, star space-motion, star catalog transformations and
-geodetic/geocentric transformations.
+addressed include calendars, astrometry, time scales, Earth rotation,
+ephemerides, precession-nutation, star catalog transformations,
+and geodetic/geocentric transformations.
 
 The "vector-matrix" library, comprising 55 routines, contains a
 collection of simple tools for manipulating the vectors, matrices and

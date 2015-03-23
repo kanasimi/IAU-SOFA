@@ -53,9 +53,9 @@
 
 
 
-                               Release 10
+                               Release 11
 
-                             2013 October 31
+                             2015 February 09
 
 contents.lis                                              2008 October 8
 
@@ -83,7 +83,7 @@ contents.lis                                              2008 October 8
 
                  A3   SOFA Board membership
 
-intro.lis                                                 2010 October 8
+intro.lis                                                2015 January 29
 
 
                   -------------------------------
@@ -94,7 +94,7 @@ intro.lis                                                 2010 October 8
   SOFA stands for "Standards Of Fundamental Astronomy".  The SOFA
   software libraries are a collection of subprograms, in source-
   code form, which implement official IAU algorithms for fundamental-
-  astronomy computations.   The subprograms at present comprise 164
+  astronomy computations.   The subprograms at present comprise 166
   "astronomy" routines supported by 55 "vector/matrix" routines,
   available in both Fortran77 and C implementations.
 
@@ -161,9 +161,9 @@ this document.
 
 The "astronomy" library comprises 164 routines (plus one obsolete
 Fortran routine that now appears under a revised name).  The areas
-addressed include calendars, time scales, ephemerides, precession-
-nutation, star space-motion, star catalog transformations and
-geodetic/geocentric transformations.
+addressed include calendars, astrometry, time scales, Earth rotation,
+ephemerides, precession-nutation, star catalog transformations,
+and geodetic/geocentric transformations.
 
 The "vector-matrix" library, comprising 55 routines, contains a
 collection of simple tools for manipulating the vectors, matrices and
@@ -297,7 +297,7 @@ Resources for operating the SOFA Center are provided by Her Majesty's
 Nautical Almanac Office, operated by the United Kingdom Hydrographic
 Office.
 
-sofa_lib.lis                                            2013 November 19
+sofa_lib.lis                                             2015 January 30
 
                      ----------------------
                      SOFA Astronomy Library
@@ -410,8 +410,12 @@ ROUTINES
      LDN       light deflection by multiple solar-system bodies
      LDSUN     light deflection by the Sun
      PMPX      apply proper motion and parallax
+     PMSAFE    apply proper motion, with zero-parallax precautions
      PVTOB     observatory position and velocity
+     PVSTAR    space motion pv-vector to star catalog data
      REFCO     refraction constants
+     STARPM    apply proper motion
+     STARPV    star catalog data to space motion pv-vector
 
   Time scales
 
@@ -539,11 +543,6 @@ ROUTINES
      FAUR03    mean longitude of Uranus
      FAVE03    mean longitude of Venus
 
-  Star space motion
-
-     PVSTAR    space motion pv-vector to star catalog data
-     STARPV    star catalog data to space motion pv-vector
-
   Star catalog conversions
 
      FK52H     transform FK5 star data into the Hipparcos system
@@ -551,8 +550,11 @@ ROUTINES
      FK5HZ     FK5 to Hipparcos assuming zero Hipparcos proper motion
      H2FK5     transform Hipparcos star data into the FK5 system
      HFK5Z     Hipparcos to FK5 assuming zero Hipparcos proper motion
-     PMSAFE    apply proper motion, with zero-parallax precautions
-     STARPM    apply proper motion
+
+  Galactic coordinates
+
+     G2ICRS    transform IAU 1958 galactic coordinates to ICRS
+     ICRS2G    transform ICRS coordinates to IAU 1958 Galactic
 
   Geodetic/geocentric
 
@@ -561,7 +563,6 @@ ROUTINES
      GC2GDE    geocentric to geodetic given ellipsoid a,f
      GD2GC     geodetic to geocentric for a nominated ellipsoid
      GD2GCE    geodetic to geocentric given ellipsoid a,f
-
 
   Obsolete
 
@@ -666,6 +667,7 @@ CALLS: FORTRAN VERSION
    CALL iau_FK5HZ  ( R5, D5, DATE1, DATE2, RH, DH )
    CALL iau_FW2M   ( GAMB, PHIB, PSI, EPS, R )
    CALL iau_FW2XY  ( GAMB, PHIB, PSI, EPS, X, Y )
+   CALL iau_G2ICRS ( DL, DB, DR, DD )
    CALL iau_GC2GD  ( N, XYZ, ELONG, PHI, HEIGHT, J )
    CALL iau_GC2GDE ( A, F, XYZ, ELONG, PHI, HEIGHT, J )
    CALL iau_GD2GC  ( N, ELONG, PHI, HEIGHT, XYZ, J )
@@ -681,6 +683,7 @@ CALLS: FORTRAN VERSION
    CALL iau_H2FK5  ( RH, DH, DRH, DDH, PXH, RVH,
   :                  R5, D5, DR5, DD5, PX5, RV5 )
    CALL iau_HFK5Z  ( RH, DH, DATE1, DATE2, R5, D5, DR5, DD5 )
+   CALL iau_ICRS2G ( DR, DD, DL, DB  )
    CALL iau_JD2CAL ( DJ1, DJ2, IY, IM, ID, FD, J )
    CALL iau_JDCALF ( NDP, DJ1, DJ2, IYMDF, J )
    CALL iau_LD     ( BM, P, Q, E, EM, DLIM, P1 )
@@ -859,6 +862,7 @@ CALLS: C VERSION
        iauFk5hz  ( r5, d5, date1, date2, &rh, &dh );
        iauFw2m   ( gamb, phib, psi, eps, r );
        iauFw2xy  ( gamb, phib, psi, eps, &x, &y );
+       iauG2icrs ( dl, db, &dr, &dd );
    i = iauGc2gd  ( n, xyz, &elong, &phi, &height );
    i = iauGc2gde ( a, f, xyz, &elong, &phi, &height );
    i = iauGd2gc  ( n, elong, phi, height, xyz );
@@ -875,6 +879,7 @@ CALLS: C VERSION
                    &r5, &d5, &dr5, &dd5, &px5, &rv5 );
        iauHfk5z  ( rh, dh, date1, date2,
                    &r5, &d5, &dr5, &dd5 );
+       iauIcrs2g ( dr, dd, &dl, &db );
    i = iauJd2cal ( dj1, dj2, &iy, &im, &id, &fd );
    i = iauJdcalf ( ndp, dj1, dj2, iymdf );
        iauLd     ( bm, p, q, e, em, dlim, p1 );
@@ -3273,7 +3278,6 @@ void iauAtciqn(double rc, double dc, double pr, double pd,
 **  where many star positions are to be transformed for one date.  The
 **  star-independent parameters can be obtained by calling one of the
 **  functions iauApci[13], iauApcg[13], iauApco[13] or iauApcs[13].
-**
 **
 **  If the only light-deflecting body to be taken into account is the
 **  Sun, the iauAtciq function can be used instead.  If in addition the
@@ -6049,7 +6053,7 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **     :  even if no leap seconds have been       :
 **     :  added.                                  :
 **     :                                          :
-**     :  Latest leap second:  2012 June 30       :
+**     :  Latest leap second:  2015 June 30       :
 **     :                                          :
 **     :__________________________________________:
 **
@@ -6075,7 +6079,6 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **                      -2 = bad month
 **                      -3 = bad day (Note 3)
 **                      -4 = bad fraction (Note 4)
-**                      -5 = internal error
 **
 **  Notes:
 **
@@ -6116,9 +6119,7 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **  5) The status value returned in the case where there are multiple
 **     errors refers to the first error detected.  For example, if the
 **     month and day are 13 and 32 respectively, status -2 (bad month)
-**     will be returned.  The "internal error" status refers to a
-**     case that is impossible but causes some compilers to issue a
-**     warning.
+**     will be returned.
 **
 **  6) In cases where a valid result is not available, zero is returned.
 **
@@ -8190,6 +8191,76 @@ void iauFw2xy(double gamb, double phib, double psi, double eps,
 
 
 
+void iauG2icrs ( double dl, double db, double *dr, double *dd )
+/*
+**  - - - - - - - - - -
+**   i a u G 2 i c r s
+**  - - - - - - - - - -
+**
+**  Transformation from Galactic Coordinates to ICRS.
+**
+**  This function is part of the International Astronomical Union's
+**  SOFA (Standards of Fundamental Astronomy) software collection.
+**
+**  Status:  support routine.
+**
+**  Given:
+**     dl     double      galactic longitude (radians)
+**     db     double      galactic latitude (radians)
+**
+**  Returned:
+**     dr     double      ICRS right ascension (radians)
+**     dd     double      ICRS declination (radians)
+**
+**  Notes:
+**
+**  1) The IAU 1958 system of Galactic coordinates was defined with
+**     respect to the now obsolete reference system FK4 B1950.0.  When
+**     interpreting the system in a modern context, several factors have
+**     to be taken into account:
+**
+**     . The inclusion in FK4 positions of the E-terms of aberration.
+**
+**     . The distortion of the FK4 proper motion system by differential
+**       Galactic rotation.
+**
+**     . The use of the B1950.0 equinox rather than the now-standard
+**       J2000.0.
+**
+**     . The frame bias between ICRS and the J2000.0 mean place system.
+**
+**     The Hipparcos Catalogue (Perryman & ESA 1997) provides a rotation
+**     matrix that transforms directly between ICRS and Galactic
+**     coordinates with the above factors taken into account.  The
+**     matrix is derived from three angles, namely the ICRS coordinates
+**     of the Galactic pole and the longitude of the ascending node of
+**     the galactic equator on the ICRS equator.  They are given in
+**     degrees to five decimal places and for canonical purposes are
+**     regarded as exact.  In the Hipparcos Catalogue the matrix
+**     elements are given to 10 decimal places (about 20 microarcsec).
+**     In the present SOFA function the matrix elements have been
+**     recomputed from the canonical three angles and are given to 30
+**     decimal places.
+**
+**  2) The inverse transformation is performed by the function iauIcrs2g.
+**
+**  Called:
+**     iauAnp       normalize angle into range 0 to 2pi
+**     iauAnpm      normalize angle into range +/- pi
+**     iauS2c       spherical coordinates to unit vector
+**     iauTrxp      product of transpose of r-matrix and p-vector
+**     iauC2s       p-vector to spherical
+**
+**  Reference:
+**     Perryman M.A.C. & ESA, 1997, ESA SP-1200, The Hipparcos and Tycho
+**     catalogues.  Astrometric and photometric star catalogues
+**     derived from the ESA Hipparcos Space Astrometry Mission.  ESA
+**     Publications Division, Noordwijk, Netherlands.
+**
+*/
+
+
+
 int iauGc2gd ( int n, double xyz[3],
                double *elong, double *phi, double *height )
 /*
@@ -9179,6 +9250,76 @@ void iauHfk5z(double rh, double dh, double date1, double date2,
 
 
 
+void iauIcrs2g ( double dr, double dd, double *dl, double *db )
+/*
+**  - - - - - - - - - -
+**   i a u I c r s 2 g
+**  - - - - - - - - - -
+**
+**  Transformation from ICRS to Galactic Coordinates.
+**
+**  This function is part of the International Astronomical Union's
+**  SOFA (Standards of Fundamental Astronomy) software collection.
+**
+**  Status:  support routine.
+**
+**  Given:
+**     dr     double      ICRS right ascension (radians)
+**     dd     double      ICRS declination (radians)
+**
+**  Returned:
+**     dl     double      galactic longitude (radians)
+**     db     double      galactic latitude (radians)
+**
+**  Notes:
+**
+**  1) The IAU 1958 system of Galactic coordinates was defined with
+**     respect to the now obsolete reference system FK4 B1950.0.  When
+**     interpreting the system in a modern context, several factors have
+**     to be taken into account:
+**
+**     . The inclusion in FK4 positions of the E-terms of aberration.
+**
+**     . The distortion of the FK4 proper motion system by differential
+**       Galactic rotation.
+**
+**     . The use of the B1950.0 equinox rather than the now-standard
+**       J2000.0.
+**
+**     . The frame bias between ICRS and the J2000.0 mean place system.
+**
+**     The Hipparcos Catalogue (Perryman & ESA 1997) provides a rotation
+**     matrix that transforms directly between ICRS and Galactic
+**     coordinates with the above factors taken into account.  The
+**     matrix is derived from three angles, namely the ICRS coordinates
+**     of the Galactic pole and the longitude of the ascending node of
+**     the galactic equator on the ICRS equator.  They are given in
+**     degrees to five decimal places and for canonical purposes are
+**     regarded as exact.  In the Hipparcos Catalogue the matrix
+**     elements are given to 10 decimal places (about 20 microarcsec).
+**     In the present SOFA function the matrix elements have been
+**     recomputed from the canonical three angles and are given to 30
+**     decimal places.
+**
+**  2) The inverse transformation is performed by the function iauG2icrs.
+**
+**  Called:
+**     iauAnp       normalize angle into range 0 to 2pi
+**     iauAnpm      normalize angle into range +/- pi
+**     iauS2c       spherical coordinates to unit vector
+**     iauRxp       product of r-matrix and p-vector
+**     iauC2s       p-vector to spherical
+**
+**  Reference:
+**     Perryman M.A.C. & ESA, 1997, ESA SP-1200, The Hipparcos and Tycho
+**     catalogues.  Astrometric and photometric star catalogues
+**     derived from the ESA Hipparcos Space Astrometry Mission.  ESA
+**     Publications Division, Noordwijk, Netherlands.
+**
+*/
+
+
+
 void iauIr(double r[3][3])
 /*
 **  - - - - - -
@@ -9730,7 +9871,6 @@ void iauNumat(double epsa, double dpsi, double deps, double rmatn[3][3])
 **     rmatn       double[3][3]   nutation matrix (Note 3)
 **
 **  Notes:
-**
 **
 **  1) The supplied mean obliquity epsa, must be consistent with the
 **     precession-nutation models from which dpsi and deps were obtained.
@@ -15654,7 +15794,7 @@ void iauZr(double r[3][3])
 **
 */
 
-copyr.lis                                               2012 February 23
+copyr.lis                                                 2015 January 5
 
 
 COPYRIGHT NOTICE
@@ -15666,7 +15806,7 @@ and C versions.)
 
 *+----------------------------------------------------------------------
 *
-*  Copyright (C) 2012
+*  Copyright (C) 2015
 *  Standards Of Fundamental Astronomy Board
 *  of the International Astronomical Union.
 *
@@ -15834,9 +15974,9 @@ file sofam.h.
 **
 **  This revision:   2013 August 27
 **
-**  SOFA release 2013-12-02
+**  SOFA release 2015-02-09
 **
-**  Copyright (C) 2013 IAU SOFA Board.  See notes at end.
+**  Copyright (C) 2015 IAU SOFA Board.  See notes at end.
 */
 
 /* Star-independent astrometry parameters */
@@ -15972,7 +16112,7 @@ typedef struct {
 
 /*----------------------------------------------------------------------
 **
-**  Copyright (C) 2013
+**  Copyright (C) 2015
 **  Standards Of Fundamental Astronomy Board
 **  of the International Astronomical Union.
 **

@@ -1,4 +1,4 @@
-#include "sofam.h"
+#include "sofa.h"
 
 int iauDat(int iy, int im, int id, double fd, double *deltat )
 /*
@@ -21,8 +21,8 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **     :     of statements that initialize the    :
 **     :     array "changes".                     :
 **     :                                          :
-**     :  2) The parameter IYV must be set to     :
-**     :     the current year.                    :
+**     :  2) The constant IYV must be set to the  :
+**     :     current year.                        :
 **     :                                          :
 **     :  3) The "Latest leap second" comment     :
 **     :     below must be set to the new leap    :
@@ -62,6 +62,7 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **                      -2 = bad month
 **                      -3 = bad day (Note 3)
 **                      -4 = bad fraction (Note 4)
+**                      -5 = internal error
 **
 **  Notes:
 **
@@ -72,13 +73,13 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **     Because leap seconds cannot, in principle, be predicted in
 **     advance, a reliable check for dates beyond the valid range is
 **     impossible.  To guard against gross errors, a year five or more
-**     after the release year of the present function (see parameter
+**     after the release year of the present function (see the constant
 **     IYV) is considered dubious.  In this case a warning status is
 **     returned but the result is computed in the normal way.
 **
-**     For both too-early and too-late years, the warning status is
-**     j=+1.  This is distinct from the error status j=-1, which
-**     signifies a year so early that JD could not be computed.
+**     For both too-early and too-late years, the warning status is +1.
+**     This is distinct from the error status -1, which signifies a year
+**     so early that JD could not be computed.
 **
 **  2) If the specified date is for a day which ends with a leap second,
 **     the UTC-TAI value returned is for the period leading up to the
@@ -94,15 +95,17 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **  4) The fraction of day is used only for dates before the
 **     introduction of leap seconds, the first of which occurred at the
 **     end of 1971.  It is tested for validity (0 to 1 is the valid
-**     range) even if not used;  if invalid, zero is used and status
-**     j=-4 is returned.  For many applications, setting fd to zero is
+**     range) even if not used;  if invalid, zero is used and status -4
+**     is returned.  For many applications, setting fd to zero is
 **     acceptable;  the resulting error is always less than 3 ms (and
 **     occurs only pre-1972).
 **
 **  5) The status value returned in the case where there are multiple
 **     errors refers to the first error detected.  For example, if the
-**     month and day are 13 and 32 respectively, j=-2 (bad month)
-**     will be returned.
+**     month and day are 13 and 32 respectively, status -2 (bad month)
+**     will be returned.  The "internal error" status refers to a
+**     case that is impossible but causes some compilers to issue a
+**     warning.
 **
 **  6) In cases where a valid result is not available, zero is returned.
 **
@@ -115,17 +118,17 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 **     the 1992 Explanatory Supplement.
 **
 **  Called:
-**     iauCal2jd    Gregorian calendar to Julian Day number
+**     iauCal2jd    Gregorian calendar to JD
 **
-**  This revision:  2012 June 14
+**  This revision:  2014 April 22
 **
-**  SOFA release 2012-03-01
+**  SOFA release 2013-12-02
 **
-**  Copyright (C) 2012 IAU SOFA Board.  See notes at end.
+**  Copyright (C) 2013 IAU SOFA Board.  See notes at end.
 */
 {
 /* Release year for this version of iauDat */
-#define IYV (2012)
+   enum { IYV = 2014};
 
 /* Reference dates (MJD) and drift rates (s/day), pre leap seconds */
    static const double drift[][2] = {
@@ -146,7 +149,7 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
    };
 
 /* Number of Delta(AT) expressions before leap seconds were introduced */
-#define NERA1 ((int) (sizeof drift / sizeof (double) / 2))
+   enum { NERA1 = (int) (sizeof drift / sizeof (double) / 2) };
 
 /* Dates and Delta(AT)s */
    static const struct {
@@ -196,7 +199,7 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
    };
 
 /* Number of Delta(AT) changes */
-   const int NDAT = sizeof changes / sizeof changes[0];
+   enum { NDAT = (int) (sizeof changes / sizeof changes[0]) };
 
 /* Miscellaneous local variables */
    int j, i, m;
@@ -229,6 +232,9 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
       if (m >= (12 * changes[i].iyear + changes[i].month)) break;
    }
 
+/* Prevent underflow warnings. */
+   if (i < 0) return -5;
+
 /* Get the Delta(AT). */
    da = changes[i].delat;
 
@@ -243,7 +249,7 @@ int iauDat(int iy, int im, int id, double fd, double *deltat )
 
 /*----------------------------------------------------------------------
 **
-**  Copyright (C) 2012
+**  Copyright (C) 2013
 **  Standards Of Fundamental Astronomy Board
 **  of the International Astronomical Union.
 **

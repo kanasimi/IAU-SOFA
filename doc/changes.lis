@@ -104,3 +104,32 @@ End of Updates
 CYH/SAB
 
 + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+
+
+
+                   Updates for SOFA Release 11a : 2015 March 4
+                   - - - - - - - - - - - - - - - - - - - - - - 
+
+This minor release (11a) contains a change to suppress a warning message 
+given by one C compiler.  The change does not affect the behaviour of the 
+routine and it is not essential that you update your libraries 
+(particularly if you are a Fortran user).
+
+The change had already been made in the 2014 September 9 (10c) release, 
+but due to an oversight was not present in the current release.  The 
+Fortran code has also been modified for harmony. 
+
+Summary of Changes
+
+iauDat      A change has been made to the ANSI C version to suppress 
+            an array bounds warning produced by recent gcc versions.
+            
+iau_DAT     A change has been made to the Fortran version to ensure 
+            equivalence between the Fortran and ANSI C versions.
+
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+End of Updates
+2015 March 4
+CYH
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+
